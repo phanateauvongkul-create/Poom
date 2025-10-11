@@ -8,7 +8,7 @@ pygame.init()
 # --- Screen setup ---
 WIDTH, HEIGHT = 900, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("World-Class Plane Crash Simulation")
+pygame.display.set_caption(" Plane Crash Simulation")
 clock = pygame.time.Clock()
 
 # --- Colors ---
@@ -24,91 +24,25 @@ small_font = pygame.font.SysFont("Arial", 26)
 
 # --- Plane options (add more if you want) ---
 plane_options = {
-    "Jet Plane": "plane1.jpg",
-    "Propeller Plane": "plane2.jpg"
+    "Jet Plane": "plane1.png",
+    "Propeller Plane": "plane2.png"
 }
 
 plane_width = 100
 plane_height = 100
 
-# --- Initialize Pygame ---
-pygame.init()
-
-# --- Display Constants ---
-WIDTH = 800
-HEIGHT = 600
-FPS = 30
-
-# --- Plane Constants ---
-PLANE_WIDTH = 80
-PLANE_HEIGHT = 50
-PLANE_INITIAL_X = 50
-PLANE_INITIAL_Y = 200
-PLANE_SPEED = 6
-PLANE_WRAP_THRESHOLD = 100
-
-# --- Physics Constants ---
-GRAVITY = 0.8
-
-# --- Stability Constants ---
-STABILITY_INITIAL = 100
-STABILITY_MAX = 100
-STABILITY_BAR_X = 50
-STABILITY_BAR_Y = 50
-STABILITY_BAR_WIDTH = 200
-STABILITY_BAR_HEIGHT = 25
-STABILITY_TEXT_Y = 20
-
-# --- Menu Constants ---
-MENU_TITLE_Y = 50
-MENU_START_Y = 150
-MENU_BUTTON_SPACING = 60
-
-# --- Event Constants ---
-EVENT_PROBABILITY = 0.02
-TURBULENCE_DAMAGE = 10
-BIRD_STRIKE_DAMAGE = 20
-ENGINE_FAILURE_DAMAGE = 30
-STORM_DAMAGE = 15
-
-# --- Game Over Constants ---
-CRASH_MESSAGE_DELAY = 3000
-CRASH_MESSAGE_X_OFFSET = 300
-
-# --- Obstacles and Damage ---
-OBSTACLES = ["Turbulence", "Bird Strike", "Engine Failure", "Storm"]
-# --- Obstacle Images ---
-OBSTACLE_IMAGES = {
-    "Turbulence": "turbulence.png",
-    "Bird Strike": "bird.png",
-    "Engine Failure": "fire.png",
-    "Storm": "storm.png"
-}
-DAMAGE = {
-    "Turbulence": TURBULENCE_DAMAGE,
-    "Bird Strike": BIRD_STRIKE_DAMAGE,
-    "Engine Failure": ENGINE_FAILURE_DAMAGE,
-    "Storm": STORM_DAMAGE
-}
-# --- Event Display Constants ---
-EVENT_DISPLAY_DURATION = 90  # frames (3 seconds at 30 FPS)
-EVENT_IMAGE_WIDTH = 100
-EVENT_IMAGE_HEIGHT = 100
-EVENT_IMAGE_X = 350
-EVENT_IMAGE_Y = 250
-EVENT_TEXT_Y_OFFSET = 120
 
 # --- Plane Selection Menu ---
 def choose_plane():
     """Display plane selection menu and return selected plane image."""
     selecting = True
-    choosen_plane_img = None
+    plane_img = None
 
     while selecting:
         screen.fill(SKY_BLUE)
-        y_offset = MENU_START_Y
-        title = font.render("Select Your Plane!", True, WHITE)
-        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, MENU_TITLE_Y))
+        y_offset = 150
+        title = font.render("✈️ Select Your Plane!", True, WHITE)
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
 
         # Draw clickable plane names
         button_rects = {}
@@ -117,8 +51,68 @@ def choose_plane():
             rect = text_surf.get_rect(center=(WIDTH // 2, y_offset))
             screen.blit(text_surf, rect)
             button_rects[name] = (rect, path)
-            y_offset += MENU_BUTTON_SPACING
+            y_offset += 60
+        obstacle_bird = pygame.image.load("bird.png")
+        obstacle_mountain = pygame.image.load("mountain.png")
+        obstacle_storm = pygame.image.load("storm.png")
 
+        obstacle_bird = pygame.transform.scale(obstacle_bird, (100, 100))
+        obstacle_mountain = pygame.transform.scale(obstacle_mountain, (200, 200))
+        obstacle_storm = pygame.transform.scale(obstacle_storm, (150, 150))
+
+        obstacles = {
+            "bird": obstacle_bird,
+            "mountain": obstacle_mountain,
+            "storm": obstacle_storm
+        }
+
+        # --- Variables ---
+        plane_x, plane_y = 50, HEIGHT // 2
+        speed = 3
+        flying = True
+        crashing = False
+        obstacle_chosen = None
+
+        clock = pygame.time.Clock()
+
+        # --- Game Loop ---
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                # Choose obstacle with keys
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        obstacle_chosen = "bird"
+                        crashing = True
+                    elif event.key == pygame.K_2:
+                        obstacle_chosen = "mountain"
+                        crashing = True
+                    elif event.key == pygame.K_3:
+                        obstacle_chosen = "storm"
+                        crashing = True
+
+            screen.fill((135, 206, 250))  # Sky blue
+
+            if flying:
+                plane_x += speed
+                if crashing:
+                    plane_y += random.choice([-5, 5])  # shake effect
+                    plane_x += 2
+                    if plane_y > HEIGHT - 100:  # crash on ground
+                        flying = False
+
+            # Draw plane
+            screen.blit(current_plane, (plane_x, plane_y))
+
+            # Draw obstacle if chosen
+            if obstacle_chosen:
+                obs = obstacles[obstacle_chosen]
+                screen.blit(obs, (WIDTH // 2, HEIGHT // 2))
+
+            pygame.display.update()
+            clock.tick(30)
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,30 +121,28 @@ def choose_plane():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for name, (rect, path) in button_rects.items():
                     if rect.collidepoint(event.pos):
-                        choosen_plane_img = pygame.image.load(path)
-                        choosen_plane_img = pygame.transform.scale(choosen_plane_img, (PLANE_WIDTH, PLANE_HEIGHT))
+                        plane_img = pygame.image.load(path)
+                        plane_img = pygame.transform.scale(plane_img, (plane_width, plane_height))
                         selecting = False
                         break
 
         pygame.display.update()
-        clock.tick(FPS)
+        clock.tick(30)
 
-    return choosen_plane_img
+    return plane_img
 
 
 # --- Simulation Function ---
 def run_simulation(plane_img):
-    plane_x = PLANE_INITIAL_X
-    plane_y = PLANE_INITIAL_Y
-    plane_speed = PLANE_SPEED
-    stability = STABILITY_INITIAL
-    stability_max = STABILITY_MAX
-    gravity = GRAVITY
+    plane_x = 50
+    plane_y = 200
+    plane_speed = 6
+    stability = 100
+    stability_max = 100
+    gravity = 0.8
 
-    # Event display tracking
-    current_event = None
-    event_image = None
-    event_timer = 0
+    obstacles = ["Turbulence", "Bird Strike", "Engine Failure", "Storm"]
+    damage = {"Turbulence": 10, "Bird Strike": 20, "Engine Failure": 30, "Storm": 15}
 
     running = True
     while running:
@@ -162,65 +154,42 @@ def run_simulation(plane_img):
                 sys.exit()
 
         # --- Random event ---
-        if random.random() < EVENT_PROBABILITY:
-            event_name = random.choice(OBSTACLES)
-            stability -= DAMAGE[event_name]
+        if random.random() < 0.02:
+            event = random.choice(obstacles)
+            stability -= damage[event]
             stability = max(0, stability)
-            print(f"{event_name}! Stability drops to {stability}")
-            plane_y += DAMAGE[event_name] // 2
-
-            # Load and scale event image
-            current_event = event_name
-            event_image = pygame.image.load(OBSTACLE_IMAGES[event_name])
-            event_image = pygame.transform.scale(event_image, (EVENT_IMAGE_WIDTH, EVENT_IMAGE_HEIGHT))
-            event_timer = EVENT_DISPLAY_DURATION
+            print(f"{event}! Stability drops to {stability}")
+            plane_y += damage[event] // 2
 
         # --- Gravity ---
         plane_y += gravity
-        plane_y = max(0, min(plane_y, HEIGHT - PLANE_HEIGHT))
+        plane_y = max(0, min(plane_y, HEIGHT - plane_height))
 
         # --- Move forward ---
         plane_x += plane_speed
-        if plane_x > WIDTH - PLANE_WRAP_THRESHOLD:
-            plane_x = PLANE_INITIAL_X  # wrap around
+        if plane_x > WIDTH - 100:
+            plane_x = 50  # wrap around
 
         # --- Draw plane ---
         screen.blit(plane_img, (plane_x, plane_y))
 
-        # --- Display event image and text ---
-        if event_timer > 0:
-            # Draw semi-transparent background for better visibility
-            overlay = pygame.Surface((WIDTH, HEIGHT))
-            overlay.set_alpha(100)
-            overlay.fill(BLACK)
-            screen.blit(overlay, (0, 0))
-
-            # Draw event image
-            screen.blit(event_image, (EVENT_IMAGE_X, EVENT_IMAGE_Y))
-
-            # Draw event text
-            event_text = font.render(f"{current_event}!", True, RED)
-            screen.blit(event_text, (WIDTH // 2 - event_text.get_width() // 2, EVENT_IMAGE_Y + EVENT_TEXT_Y_OFFSET))
-
-            event_timer -= 1
-
         # --- Stability bar ---
-        pygame.draw.rect(screen, RED, (STABILITY_BAR_X, STABILITY_BAR_Y, STABILITY_BAR_WIDTH, STABILITY_BAR_HEIGHT))
-        green_width = STABILITY_BAR_WIDTH * (stability / stability_max)
-        pygame.draw.rect(screen, GREEN, (STABILITY_BAR_X, STABILITY_BAR_Y, green_width, STABILITY_BAR_HEIGHT))
+        pygame.draw.rect(screen, RED, (50, 50, 200, 25))
+        green_width = 200 * (stability / stability_max)
+        pygame.draw.rect(screen, GREEN, (50, 50, green_width, 25))
         text = small_font.render(f"Stability: {stability}", True, BLACK)
-        screen.blit(text, (STABILITY_BAR_X, STABILITY_TEXT_Y))
+        screen.blit(text, (50, 20))
 
         # --- Check for crash ---
-        if stability <= 0 or plane_y >= HEIGHT - PLANE_HEIGHT:
-            crash_text = font.render("PLANE CRASHED! Simulation Over", True, RED)
-            screen.blit(crash_text, (WIDTH // 2 - CRASH_MESSAGE_X_OFFSET, HEIGHT // 2))
+        if stability <= 0 or plane_y >= HEIGHT - plane_height:
+            crash_text = font.render("💥 PLANE CRASHED! Simulation Over 💥", True, RED)
+            screen.blit(crash_text, (WIDTH//2 - 300, HEIGHT//2))
             pygame.display.update()
-            pygame.time.delay(CRASH_MESSAGE_DELAY)
+            pygame.time.delay(3000)
             running = False
 
         pygame.display.update()
-        clock.tick(FPS)
+        clock.tick(30)
 
 
 # --- Main program ---
@@ -229,3 +198,4 @@ run_simulation(plane_img)
 
 pygame.quit()
 sys.exit()
+
